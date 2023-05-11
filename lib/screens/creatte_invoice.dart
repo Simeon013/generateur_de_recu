@@ -117,6 +117,9 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                     return null;
                   },
                 ),
+                InputDatePickerFormField(
+                  firstDate: DateTime.now(), lastDate: DateTime.now().add(Duration(days: 365)),
+                ),
                 SizedBox(height: 16),
                 // Column(
                 //   children: [
