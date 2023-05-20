@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:generateur_de_recu/screens/home.dart';
+import 'package:generateur_de_recu/screens/menu.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/adapters.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Hive.initFlutter();
+  await Hive.openBox('location_box');
   runApp(const MyApp());
 }
 
@@ -17,7 +24,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.indigo,
       ),
-      home: HomePage(),
+      home: MenuPage(),
     );
   }
 }

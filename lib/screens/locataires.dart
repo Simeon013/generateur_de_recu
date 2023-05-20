@@ -1,26 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../models/person.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  await Hive.initFlutter();
-  await Hive.openBox('location_box');
-}
+import '../models/locataire.dart';
 
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class LocatairesPage extends StatefulWidget {
+  const LocatairesPage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<LocatairesPage> createState() => _LocatairesPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _LocatairesPageState extends State<LocatairesPage> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _sommeController = TextEditingController();
 
   List<Map<String, dynamic>> _items = [];
 
@@ -32,22 +26,24 @@ class _HomePageState extends State<HomePage> {
     _refreshItems();
   }
 
-  // @override
-  // void dispose() {
-  //   _nameController.dispose();
-  //   _ageController.dispose();
-  //   super.dispose();
-  // }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _sommeController.dispose();
+    // _locationBox.close();
+    super.dispose();
+  }
 
   void _refreshItems() {
     final data = _locationBox.keys.map((key) {
       final item = _locationBox.get(key);
 
-      final person = Person(name: item['name'] ?? '', age: item['age'] ?? 0);
+      final locataire = Locataire(name: item['name'] ?? '', somme: item['somme'] ?? 0);
 
       return {
         "key": key,
-        "person": person,
+        "locataire": locataire,
       };
     }).toList();
     setState(() {
@@ -57,20 +53,20 @@ class _HomePageState extends State<HomePage> {
 
 
   //Create new item
-  Future<void> _createItem(Person newItem) async {
+  Future<void> _createItem(Locataire newItem) async {
     await _locationBox.add({
       "name": newItem.name,
-      "age": newItem.age,
+      "somme": newItem.somme,
     });
     _refreshItems();
   }
 
 
   //Update item
-  Future<void> _updateItem(int itemKey, Person item) async {
+  Future<void> _updateItem(int itemKey, Locataire item) async {
     await _locationBox.put(itemKey, {
       "name": item.name,
-      "age": item.age,
+      "somme": item.somme,
     });
     _refreshItems();
   }
@@ -112,7 +108,7 @@ class _HomePageState extends State<HomePage> {
     if (itemKey != null) {
       final item = _locationBox.get(itemKey);
       _nameController.text = item['name'];
-      _ageController.text = item['age'].toString();
+      _sommeController.text = item['somme'].toString();
     }
 
     showModalBottomSheet(
@@ -133,23 +129,23 @@ class _HomePageState extends State<HomePage> {
                 TextField(
                     controller: _nameController,
                     decoration: const InputDecoration(
-                      labelText: 'Item Name',
+                      labelText: 'Nom',
                     )
                 ),
                 const SizedBox(height: 10),
                 TextField(
-                    controller: _ageController,
+                    controller: _sommeController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                      labelText: 'age',
+                      labelText: 'Somme',
                     )
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    final newItem = Person(
+                    final newItem = Locataire(
                       name: _nameController.text,
-                      age: int.parse(_ageController.text),
+                      somme: int.parse(_sommeController.text),
                     );
 
                     if (itemKey == null) {
@@ -162,11 +158,11 @@ class _HomePageState extends State<HomePage> {
                     }
 
                     _nameController.text = '';
-                    _ageController.text = '';
+                    _sommeController.text = '';
 
                     Navigator.of(context).pop();
                   },
-                  child: Text(itemKey==null? 'Save' : 'Update'),
+                  child: Text(itemKey==null? 'Enregistrer' : 'Modifier'),
                 ),
                 const SizedBox(height: 15),
               ],
@@ -179,21 +175,20 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Person List'),
+        title: Text('Liste des locataires'),
       ),
       body: ListView.builder(
           itemCount: _items.length,
           itemBuilder: (_, index) {
             final item = _items[index];
-            final person = item['person'] as Person;
-            print(_items[index][1]);
+            final locataire = item['locataire'] as Locataire;
             return Card(
                 color: Colors.grey,
                 margin: const EdgeInsets.all(10),
                 elevation: 3,
                 child: ListTile(
-                  title: Text(person.name?? 'Unknown'),
-                  subtitle: Text(person.age.toString()),
+                  title: Text(locataire.name),
+                  subtitle: Text('${locataire.somme} CFA'),
                   trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

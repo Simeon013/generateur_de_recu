@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:generateur_de_recu/models/locataire.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
@@ -14,11 +15,11 @@ import '../util/category.dart';
 import '../util/url_text.dart';
 
 class PdfPage extends StatefulWidget {
-  final String locataire;
+  final Locataire locataire;
   final String mois;
-  final String montant;
+  final ByteData signature;
 
-  PdfPage({Key? key, required this.locataire, required this.mois, required this.montant}) : super(key: key);
+  PdfPage({Key? key, required this.locataire, required this.mois, required this.signature}) : super(key: key);
 
 
   @override
@@ -56,16 +57,16 @@ class _PdfPageState extends State<PdfPage> {
         actions: actions,
         onPrinted: showPrintedToast,
         onShared: showSharedToast,
-        build: (_) => generate(widget.locataire,widget.mois,widget.montant, PdfPageFormat.a4),
+        build: (_) => generate(widget.locataire,widget.mois,widget.signature, PdfPageFormat.a4),
       )
     );
   }
 }
 
 Future<Uint8List>generate(
-    final String locataire,
+    final Locataire locataire,
     final String mois,
-    final String montant,
+    final ByteData signature,
     final PdfPageFormat format
     ) async{
   final doc = pw.Document(
@@ -77,6 +78,7 @@ Future<Uint8List>generate(
   final footerImage = pw.MemoryImage(
     (await rootBundle.load('assets/android_studio.png')).buffer.asUint8List(),
   );
+  final image = pw.MemoryImage(signature.buffer.asUint8List());
   final font = await rootBundle.load('assets/OpenSansRegular.ttf');
   final ttf = pw.Font.ttf(font);
 
@@ -88,8 +90,8 @@ Future<Uint8List>generate(
     // paymentTerms,
     // "266",
   ];
-  final headers = ['Locataire', 'Loyé de ', 'Montant'];
-  final invoices_data = [locataire, mois, montant];
+  final headers = ['Locataire', 'Mofif', 'Montant'];
+  final invoices_data = [locataire.name, 'Loyé du mois de $mois', locataire.somme.toString()];
 
 
   final pageTheme = await _myPageTheme(format);
@@ -250,20 +252,31 @@ Future<Uint8List>generate(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Text(
-                      "Payment Instructions",
+                      " ",
                       style: pw.TextStyle(fontSize: 18),
                     ),
                     pw.Text(
-                      'invoice.paymentInstructions',
+                      ' ',
                     ),
                   ],
                 ),
                 pw.Align(
                   alignment: pw.Alignment.bottomRight,
-                  child: pw.Image(
-                    logoImage,
-                    height: 80,
-                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text(
+                        "Signature",
+                      ),
+                      pw.Image(
+                        image,
+                        height: 80,
+                      ),
+                      pw.Text(
+                        "Siméon DAOUDA",
+                      ),
+                    ]
+                  )
                 )
               ]),
         ],
@@ -310,7 +323,7 @@ buildText({
   TextStyle? titleStyle,
   bool unite = false,
 }) {
-  final style = titleStyle ?? TextStyle(fontWeight: FontWeight.bold);
+  final style = titleStyle ?? const TextStyle(fontWeight: FontWeight.bold);
 
   return pw.Container(
     width: width,
@@ -366,7 +379,9 @@ Future<void> saveAsFile(
   final appDocDir = await getApplicationDocumentsDirectory();
   final appDocPath = appDocDir.path;
   final file = File('$appDocPath/test.pdf');
-  print('Save as file ${file.path}...');
+  if (kDebugMode) {
+    print('Save as file ${file.path}...');
+  }
   await file.writeAsBytes(bytes);
   await OpenFile.open(file.path);
 }
