@@ -28,7 +28,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
 
   List<Map<String, dynamic>> _items = [];
 
-  final _locationBox = Hive.box('location_box');
+  final _locataireBox = Hive.box('locataire_box');
 
   @override
   void initState() {
@@ -49,8 +49,8 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
   }
 
   void _refreshItems() {
-    final data = _locationBox.keys.map((key) {
-      final item = _locationBox.get(key);
+    final data = _locataireBox.keys.map((key) {
+      final item = _locataireBox.get(key);
 
       final locataire = Locataire(name: item['name'], somme: item['somme']);
 
@@ -121,25 +121,25 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                     // InputDatePickerFormField(
                     //   firstDate: DateTime.now(), lastDate: DateTime.now().add(Duration(days: 365)),
                     // ),
-                    const SizedBox(height: 16),
-                    Column(
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                          ),
-                          child: SfSignaturePad(
-                            key: signatureGlobalKey,
-                          ),
-                        ),
-                        ElevatedButton(
-                          child: Text("Clear"),
-                          onPressed: () async {
-                            _handleClearButtonPressed();
-                          }
-                        )
-                      ],
-                    ),
+                    // const SizedBox(height: 16),
+                    // Column(
+                    //   children: [
+                    //     Container(
+                    //       decoration: BoxDecoration(
+                    //         border: Border.all(color: Colors.grey),
+                    //       ),
+                    //       child: SfSignaturePad(
+                    //         key: signatureGlobalKey,
+                    //       ),
+                    //     ),
+                    //     ElevatedButton(
+                    //       child: Text("Clear"),
+                    //       onPressed: () async {
+                    //         _handleClearButtonPressed();
+                    //       }
+                    //     )
+                    //   ],
+                    // ),
                     const SizedBox(height: 16),
                     // ElevatedButton(
                     //   child: Text('Ajouter'),
@@ -179,7 +179,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
     final imageSignature = await image?.toByteData(format: ui.ImageByteFormat.png);
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => PdfPage(locataire: selectedLocataire, mois: _dateController.text, signature: imageSignature!)),
+      MaterialPageRoute(builder: (context) => PdfPage(locataire: selectedLocataire, mois: _dateController.text)),
     );
   }
 

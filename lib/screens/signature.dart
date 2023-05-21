@@ -18,7 +18,7 @@ class SignaturePage extends StatefulWidget {
 class _SignaturePageState extends State<SignaturePage> {
   final GlobalKey<SfSignaturePadState> signatureGlobalKey = GlobalKey();
 
-  final _locationBox = Hive.box('location_box');
+  final _signatureBox = Hive.box('signature_box');
 
   void _handleClearButtonPressed() {
     signatureGlobalKey.currentState!.clear();
@@ -32,7 +32,7 @@ class _SignaturePageState extends State<SignaturePage> {
     setState(() {
       signatureBytes = byteData!.buffer.asUint8List();
     });
-    _locationBox.put('signature', signatureBytes);
+    _signatureBox.put('signature', signatureBytes);
     Navigator.of(context).pop();
   }
 
@@ -44,7 +44,7 @@ class _SignaturePageState extends State<SignaturePage> {
 
   @override
   Widget build(BuildContext context) {
-    var sign = _locationBox.get('signature');
+    var sign = _signatureBox.get('signature');
     return Scaffold(
       appBar: AppBar(
         title: Text('Signature'),

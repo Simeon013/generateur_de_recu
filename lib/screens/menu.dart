@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:generateur_de_recu/pdf/pdf_page.dart';
+import 'package:generateur_de_recu/screens/home.dart';
 import 'package:generateur_de_recu/screens/signature.dart';
 
 import 'creatte_invoice.dart';
@@ -53,7 +54,7 @@ class MenuPage extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () {
                   // Naviguer vers la page de la liste des appartements
-                  // Navigator.push(context, MaterialPageRoute(builder: (context) => ApartmentListPage()));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
                 },
                 icon: Icon(Icons.list),
                 label: Text('Liste des appartements'),

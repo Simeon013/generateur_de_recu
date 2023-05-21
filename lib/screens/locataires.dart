@@ -1,10 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/locataire.dart';
-
 
 class LocatairesPage extends StatefulWidget {
   const LocatairesPage({super.key});
@@ -19,31 +16,26 @@ class _LocatairesPageState extends State<LocatairesPage> {
 
   List<Map<String, dynamic>> _items = [];
 
-  final _locationBox = Hive.box('location_box');
+  final _locataireBox = Hive.box('locataire_box');
 
   @override
   void initState() {
     super.initState();
     _refreshItems();
   }
-
-
+  
   @override
   void dispose() {
     _nameController.dispose();
     _sommeController.dispose();
-    // _locationBox.close();
     super.dispose();
   }
 
   void _refreshItems() {
-    final data = _locationBox.keys.map((key) {
-      final item = _locationBox.get(key);
+    final data = _locataireBox.keys.map((key) {
+      final item = _locataireBox.get(key);
 
       final locataire = Locataire(name: item['name'] ?? '', somme: item['somme'] ?? 0);
-      if (kDebugMode) {
-        print(item['somme']);
-      }
 
       return {
         "key": key,
@@ -58,7 +50,7 @@ class _LocatairesPageState extends State<LocatairesPage> {
 
   //Create new item
   Future<void> _createItem(Locataire newItem) async {
-    await _locationBox.add({
+    await _locataireBox.add({
       "name": newItem.name,
       "somme": newItem.somme,
     });
@@ -68,7 +60,7 @@ class _LocatairesPageState extends State<LocatairesPage> {
 
   //Update item
   Future<void> _updateItem(int itemKey, Locataire item) async {
-    await _locationBox.put(itemKey, {
+    await _locataireBox.put(itemKey, {
       "name": item.name,
       "somme": item.somme,
     });
@@ -96,7 +88,7 @@ class _LocatairesPageState extends State<LocatairesPage> {
             TextButton(
               child: const Text('Oui'),
               onPressed: () async {
-                await _locationBox.delete(key);
+                await _locataireBox.delete(key);
                 _refreshItems();
                 Navigator.of(dialogContext).pop(); // Dismiss alert dialog
               },
@@ -110,7 +102,7 @@ class _LocatairesPageState extends State<LocatairesPage> {
   void _showForm(BuildContext ctx, int? itemKey) async {
 
     if (itemKey != null) {
-      final item = _locationBox.get(itemKey);
+      final item = _locataireBox.get(itemKey);
       _nameController.text = item['name'];
       _sommeController.text = item['somme'].toString();
     }

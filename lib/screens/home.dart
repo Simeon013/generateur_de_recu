@@ -3,14 +3,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/person.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  await Hive.initFlutter();
-  await Hive.openBox('location_box');
-}
-
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -24,7 +16,7 @@ class _HomePageState extends State<HomePage> {
 
   List<Map<String, dynamic>> _items = [];
 
-  final _locationBox = Hive.box('location_box');
+  final _testBox = Hive.box('test_box');
 
   @override
   void initState() {
@@ -40,8 +32,8 @@ class _HomePageState extends State<HomePage> {
   // }
 
   void _refreshItems() {
-    final data = _locationBox.keys.map((key) {
-      final item = _locationBox.get(key);
+    final data = _testBox.keys.map((key) {
+      final item = _testBox.get(key);
 
       final person = Person(name: item['name'] ?? '', age: item['age'] ?? 0);
 
@@ -58,7 +50,7 @@ class _HomePageState extends State<HomePage> {
 
   //Create new item
   Future<void> _createItem(Person newItem) async {
-    await _locationBox.add({
+    await _testBox.add({
       "name": newItem.name,
       "age": newItem.age,
     });
@@ -68,7 +60,7 @@ class _HomePageState extends State<HomePage> {
 
   //Update item
   Future<void> _updateItem(int itemKey, Person item) async {
-    await _locationBox.put(itemKey, {
+    await _testBox.put(itemKey, {
       "name": item.name,
       "age": item.age,
     });
@@ -96,7 +88,7 @@ class _HomePageState extends State<HomePage> {
             TextButton(
               child: const Text('Oui'),
               onPressed: () async {
-                await _locationBox.delete(key);
+                await _testBox.delete(key);
                 _refreshItems();
                 Navigator.of(dialogContext).pop(); // Dismiss alert dialog
               },
@@ -110,7 +102,7 @@ class _HomePageState extends State<HomePage> {
   void _showForm(BuildContext ctx, int? itemKey) async {
 
     if (itemKey != null) {
-      final item = _locationBox.get(itemKey);
+      final item = _testBox.get(itemKey);
       _nameController.text = item['name'];
       _ageController.text = item['age'].toString();
     }

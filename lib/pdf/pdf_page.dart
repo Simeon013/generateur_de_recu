@@ -18,9 +18,8 @@ import '../util/url_text.dart';
 class PdfPage extends StatefulWidget {
   final Locataire locataire;
   final String mois;
-  final ByteData signature;
 
-  PdfPage({Key? key, required this.locataire, required this.mois, required this.signature}) : super(key: key);
+  PdfPage({Key? key, required this.locataire, required this.mois}) : super(key: key);
 
 
   @override
@@ -30,7 +29,8 @@ class PdfPage extends StatefulWidget {
 class _PdfPageState extends State<PdfPage> {
   PrintingInfo? printingInfo;
 
-  final _locationBox = Hive.box('location_box');
+  final _locataireBox = Hive.box('locataire_box');
+  final _signatureBox = Hive.box('signature_box');
 
 
   @override
@@ -52,7 +52,7 @@ class _PdfPageState extends State<PdfPage> {
       if (!kIsWeb)
         const PdfPreviewAction(icon: Icon(Icons.save), onPressed: saveAsFile),
     ];
-    var sign = _locationBox.get('signature');
+    var sign = _signatureBox.get('signature');
     return Scaffold(
       appBar: AppBar(
         title: const Text('Flutter PDF'),
@@ -71,7 +71,7 @@ class _PdfPageState extends State<PdfPage> {
 Future<Uint8List>generate(
     final Locataire locataire,
     final String mois,
-    final ByteData signature,
+    final Uint8List signature,
     final PdfPageFormat format
     ) async{
   final doc = pw.Document(
@@ -399,7 +399,7 @@ void showPrintedToast(final BuildContext context){
   );
 }
 
-void showSharedToast(final BuildContext context){
+void  showSharedToast(final BuildContext context){
   ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Shared'),

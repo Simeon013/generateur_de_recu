@@ -8,7 +8,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Hive.initFlutter();
-  await Hive.openBox('location_box');
+  await Hive.openBox('locataire_box');
+  await Hive.openBox('signature_box');
+  await Hive.openBox('test_box');
   runApp(const MyApp());
 }
 
