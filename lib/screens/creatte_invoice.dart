@@ -52,7 +52,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
     final data = _locationBox.keys.map((key) {
       final item = _locationBox.get(key);
 
-      final locataire = Locataire(name: item['name'] ?? '', somme: item['somme'] ?? 0);
+      final locataire = Locataire(name: item['name'], somme: item['somme']);
 
       return {
         "key": key,
@@ -73,7 +73,6 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
       ),
       body: Builder(
         builder: (BuildContext context) {
-          String? _selectedLocataire;
           return SingleChildScrollView(
             child: Container(
               padding: const EdgeInsets.all(16),
@@ -82,19 +81,6 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // TextFormField(
-                    //   controller: _locataireController,
-                    //   decoration: const InputDecoration(labelText: 'Nom du locataire'),
-                    //   keyboardType: TextInputType.text,
-                    //   validator: (value) {
-                    //     if (value!.isEmpty) {
-                    //       return 'Veuillez entrer un nom du locataire';
-                    //     }
-                    //     return null;
-                    //   },
-                    // ),
-                    // const SizedBox(height: 16),
-
                     DropdownButtonFormField<Locataire>(
                       // value: selectedLocataire,
                       onChanged: (Locataire? newValue) {
@@ -121,18 +107,6 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                     ),
 
                     const SizedBox(height: 16),
-                    // TextFormField(
-                    //   controller: _montantController,
-                    //   decoration: const InputDecoration(labelText: 'Somme'),
-                    //   keyboardType: TextInputType.number,
-                    //   validator: (value) {
-                    //     if (value!.isEmpty) {
-                    //       return 'Veuillez entrer la somme';
-                    //     }
-                    //     return null;
-                    //   },
-                    // ),
-                    // SizedBox(height: 16),
                     TextFormField(
                       controller: _dateController,
                       decoration: const InputDecoration(labelText: 'Mois'),
@@ -147,7 +121,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                     // InputDatePickerFormField(
                     //   firstDate: DateTime.now(), lastDate: DateTime.now().add(Duration(days: 365)),
                     // ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Column(
                       children: [
                         Container(
@@ -166,7 +140,7 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
                         )
                       ],
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     // ElevatedButton(
                     //   child: Text('Ajouter'),
                     //   onPressed: () async {
@@ -201,13 +175,6 @@ class _CreateInvoicePageState extends State<CreateInvoicePage> {
   }
 
   Future<void> onSubmit() async {
-    // showDialog<void>(
-    //   context: context,
-    //   barrierDismissible: false,
-    //   builder: (context) => const Center(
-    //     child: CircularProgressIndicator(color: Colors.red,),
-    //   ),
-    // );
     final image = await signatureGlobalKey.currentState?.toImage();
     final imageSignature = await image?.toByteData(format: ui.ImageByteFormat.png);
     Navigator.push(

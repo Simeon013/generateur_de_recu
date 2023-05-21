@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:generateur_de_recu/models/locataire.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
@@ -29,6 +30,9 @@ class PdfPage extends StatefulWidget {
 class _PdfPageState extends State<PdfPage> {
   PrintingInfo? printingInfo;
 
+  final _locationBox = Hive.box('location_box');
+
+
   @override
   void initState() {
     super.initState();
@@ -48,6 +52,7 @@ class _PdfPageState extends State<PdfPage> {
       if (!kIsWeb)
         const PdfPreviewAction(icon: Icon(Icons.save), onPressed: saveAsFile),
     ];
+    var sign = _locationBox.get('signature');
     return Scaffold(
       appBar: AppBar(
         title: const Text('Flutter PDF'),
@@ -57,7 +62,7 @@ class _PdfPageState extends State<PdfPage> {
         actions: actions,
         onPrinted: showPrintedToast,
         onShared: showSharedToast,
-        build: (_) => generate(widget.locataire,widget.mois,widget.signature, PdfPageFormat.a4),
+        build: (_) => generate(widget.locataire,widget.mois,sign, PdfPageFormat.a4),
       )
     );
   }

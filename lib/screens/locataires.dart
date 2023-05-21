@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -40,6 +41,9 @@ class _LocatairesPageState extends State<LocatairesPage> {
       final item = _locationBox.get(key);
 
       final locataire = Locataire(name: item['name'] ?? '', somme: item['somme'] ?? 0);
+      if (kDebugMode) {
+        print(item['somme']);
+      }
 
       return {
         "key": key,

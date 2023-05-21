@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:generateur_de_recu/pdf/pdf_page.dart';
+import 'package:generateur_de_recu/screens/signature.dart';
 
 import 'creatte_invoice.dart';
 import 'locataires.dart';
@@ -89,7 +90,8 @@ class MenuPage extends StatelessWidget {
             GridTile(
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // Naviguer vers la page de l'historique des reçus
+                  // Naviguer vers la page de modification de signature
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => SignaturePage()));
                 },
                 icon: Icon(Icons.edit),
                 label: Text("Modifier la signature"),
