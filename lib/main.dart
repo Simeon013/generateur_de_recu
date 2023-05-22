@@ -10,6 +10,7 @@ void main() async {
   await Hive.initFlutter();
   await Hive.openBox('locataire_box');
   await Hive.openBox('signature_box');
+  await Hive.openBox('invoice_box');
   await Hive.openBox('test_box');
   runApp(const MyApp());
 }

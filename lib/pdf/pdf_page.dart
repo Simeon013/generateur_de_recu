@@ -12,6 +12,7 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../models/invoice.dart';
 import '../util/category.dart';
 import '../util/url_text.dart';
 
@@ -31,6 +32,7 @@ class _PdfPageState extends State<PdfPage> {
 
   final _locataireBox = Hive.box('locataire_box');
   final _signatureBox = Hive.box('signature_box');
+  final _invoiceBox = Hive.box('invoice_box');
 
 
   @override
@@ -42,6 +44,13 @@ class _PdfPageState extends State<PdfPage> {
     final info = await Printing.info();
     setState(() {
       printingInfo = info;
+    });
+  }
+
+  Future<void> createItem(Invoice newItem) async {
+    await _invoiceBox.add({
+      "name": newItem.name,
+      "pdf": newItem.pdf,
     });
   }
 
@@ -381,14 +390,35 @@ Future<void> saveAsFile(
     final PdfPageFormat pageFormat,
     ) async {
   final bytes = await build(pageFormat);
+
+
+  // final invoice = Invoice(bytes, 'invoice_name');
+  //
+  // final _invoiceBox = Hive.box('invoice_box');
+  // await _invoiceBox.add(invoice);
+
   final appDocDir = await getApplicationDocumentsDirectory();
   final appDocPath = appDocDir.path;
-  final file = File('$appDocPath/test.pdf');
+  final file = File('$appDocPath/${DateTime.now().toIso8601String()}.pdf');
   if (kDebugMode) {
     print('Save as file ${file.path}...');
   }
   await file.writeAsBytes(bytes);
   await OpenFile.open(file.path);
+
+  final newItem = Invoice(
+    name: file.path.split('/').last,
+    pdf: bytes,
+  );
+  print(bytes);
+
+  final invoiceBox = Hive.box('invoice_box');
+  await invoiceBox.add({
+    "name": newItem.name,
+    "pdf": newItem.pdf,
+  });
+
+  print('newItem.name: ${newItem.name}');
 }
 
 void showPrintedToast(final BuildContext context){

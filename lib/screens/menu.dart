@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:generateur_de_recu/pdf/pdf_page.dart';
 import 'package:generateur_de_recu/screens/home.dart';
+import 'package:generateur_de_recu/screens/invoices.dart';
 import 'package:generateur_de_recu/screens/signature.dart';
 
 import 'creatte_invoice.dart';
@@ -73,6 +74,7 @@ class MenuPage extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () {
                   // Naviguer vers la page de l'historique des reçus
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => InvoicesPage()));
                 },
                 icon: Icon(Icons.history),
                 label: Text("Historique des reçus"),
