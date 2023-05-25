@@ -6,11 +6,14 @@ import 'package:hive/hive.dart';
 @HiveType(typeId: 0)
 class Invoice extends HiveObject {
   @HiveField(0)
-  Uint8List pdf;
+  int id;
 
   @HiveField(1)
   String name;
 
-  Invoice({required this.pdf, required this.name});
+  @HiveField(2)
+  Uint8List pdf;
+
+  Invoice({required this.id, required this.pdf, required this.name});
 }
 

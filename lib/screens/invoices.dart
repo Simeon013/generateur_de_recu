@@ -1,11 +1,16 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:generateur_de_recu/pdf/reader.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:open_file/open_file.dart';
+import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:typed_data';
+import 'package:flutter/services.dart' show ByteData, rootBundle;
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 import '../models/invoice.dart';
 
@@ -29,7 +34,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
     final data = _invoiceBox.keys.map((key) {
       final item = _invoiceBox.get(key);
 
-      final invoice = Invoice(name: item['name'] ?? '', pdf: item['pdf']);
+      final invoice = Invoice(id: item['id'] ?? 0, name: item['name'] ?? '', pdf: item['pdf']);
 
       return {
         "key": key,
@@ -57,13 +62,19 @@ class _InvoicesPageState extends State<InvoicesPage> {
             margin: const EdgeInsets.all(10),
             elevation: 3,
             child: ListTile(
-              title: Text(invoice.name),
+              onTap: () => _openInvoice(invoice),
+              title: Text(
+                invoice.name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    onPressed: () => _openInvoice(invoice),
-                    icon: const Icon(Icons.remove_red_eye),
+                    onPressed: () {},
+                    icon: const Icon(Icons.share_outlined),
                   ),
                 ],
               ),
@@ -78,27 +89,10 @@ class _InvoicesPageState extends State<InvoicesPage> {
     Hive.box<Invoice>('invoice_box').delete(invoice.key);
   }
 
-  void _openInvoice(Invoice invoice) async {
+  Future<void> _openInvoice(Invoice invoice) async {
     final pdfData = invoice.pdf;
-
     final pdfBytes = pdfData.buffer.asUint8List();
 
-    final pdfDocument = pw.Document();
-    pdfDocument.addPage(
-      pw.Page(
-        build: (context) {
-          return pw.Image(pw.MemoryImage(pdfBytes));
-        },
-      ),
-    );
-
-    // Obtenez le répertoire de cache de l'application
-    final appDir = await getTemporaryDirectory();
-    final tempPath = '${appDir.path}/test.pdf';
-
-    final File file = File(tempPath);
-    // await file.writeAsBytes(pdfDocument.save());
-
-    await Printing.sharePdf(bytes: await file.readAsBytes());
+    Navigator.push(context, MaterialPageRoute(builder: (context) => ReaderPage(pdf: pdfBytes, pdfName: invoice.name,)));
   }
 }

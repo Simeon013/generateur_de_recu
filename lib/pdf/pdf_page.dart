@@ -13,8 +13,6 @@ import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../models/invoice.dart';
-import '../util/category.dart';
-import '../util/url_text.dart';
 
 class PdfPage extends StatefulWidget {
   final Locataire locataire;
@@ -30,13 +28,15 @@ class PdfPage extends StatefulWidget {
 class _PdfPageState extends State<PdfPage> {
   PrintingInfo? printingInfo;
 
-  final _locataireBox = Hive.box('locataire_box');
   final _signatureBox = Hive.box('signature_box');
   final _invoiceBox = Hive.box('invoice_box');
 
 
   @override
   void initState() {
+    setState(() {
+      id = DateFormat('ddMMyyyyHHmms').format(DateTime.now());
+    });
     super.initState();
     _init();
   }
@@ -54,9 +54,12 @@ class _PdfPageState extends State<PdfPage> {
     });
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     pw.RichText.debug = true;
+
     final actions = <PdfPreviewAction>[
       if (!kIsWeb)
         const PdfPreviewAction(icon: Icon(Icons.save), onPressed: saveAsFile),
@@ -64,27 +67,48 @@ class _PdfPageState extends State<PdfPage> {
     var sign = _signatureBox.get('signature');
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Flutter PDF'),
+        title: Text('$name-${widget.mois}'),
       ),
       body: PdfPreview(
+        loadingWidget: const Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.picture_as_pdf , size: 100,),
+              Text('Génération du fichier'),
+              SizedBox(height: 20,),
+              CircularProgressIndicator(),
+            ],
+          ),
+        ),
+        pdfFileName: 'Reçu-$name-${widget.mois}.pdf',
         maxPageWidth: 700,
+        canChangeOrientation: false,
+        canChangePageFormat: false,
+        canDebug: false,
         actions: actions,
         onPrinted: showPrintedToast,
         onShared: showSharedToast,
-        build: (_) => generate(widget.locataire,widget.mois,sign, PdfPageFormat.a4),
+        build: (_) => generate(widget.locataire,widget.mois,sign, PdfPageFormat.a4, id),
       )
     );
   }
 }
 
+String id = DateFormat('ddMMyyyyHHmms').format(DateTime.now());
+String name = '';
+
+
 Future<Uint8List>generate(
     final Locataire locataire,
     final String mois,
     final Uint8List signature,
-    final PdfPageFormat format
+    final PdfPageFormat format,
+    final String id
     ) async{
   final doc = pw.Document(
-    title: 'Flutter PDF',
+    title: 'Recu de location',
   );
   final logoImage = pw.MemoryImage(
     (await rootBundle.load('assets/vs_code.png')).buffer.asUint8List(),
@@ -96,23 +120,26 @@ Future<Uint8List>generate(
   final font = await rootBundle.load('assets/OpenSansRegular.ttf');
   final ttf = pw.Font.ttf(font);
 
+  name = locataire.name;
+
   const paymentTerms = '${15} days';
-  final titles = <String>['Invoice Number:', 'Date:'];
+  final titles = <String>['Recu id:', 'Date:'];
   final data = <String>[
-    "100",
+    id,
     DateFormat('dd/MM/yyyy').format(DateTime.now()),
     // paymentTerms,
     // "266",
   ];
-  final headers = ['Locataire', 'Mofif', 'Montant'];
-  final invoices_data = [locataire.name, 'Loyé du mois de $mois', locataire.somme.toString()];
+  final headers = ['Nom & Prénom', 'Mofif', 'Montant'];
+  final invoices_data = [locataire.name, 'Loyé du mois de $mois', '${locataire.somme} CFA'];
 
 
   final pageTheme = await _myPageTheme(format);
+  final invoiceBox = Hive.box('invoice_box');
 
   doc.addPage(
       pw.MultiPage(
-        header: (context) => pw.Text("INNVOICE ID : 00000",
+        header: (context) => pw.Text("Reçu No: $id",
             style: pw.TextStyle(fontSize: 25, fontWeight: pw.FontWeight.bold)),
         build: (context) => [
           pw.Column(
@@ -140,7 +167,7 @@ Future<Uint8List>generate(
                         width: 100,
                       ),
                       pw.SizedBox(height: 1 * PdfPageFormat.cm),
-                      pw.Text('Flytter PDF',
+                      pw.Text('Reçu de location',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                       pw.SizedBox(height: 1 * PdfPageFormat.mm),
                       // pw.Text('Adresse'),
@@ -151,7 +178,7 @@ Future<Uint8List>generate(
                     width: 80,
                     child: pw.BarcodeWidget(
                       barcode: pw.Barcode.qrCode(),
-                      data: 'invoice.id',
+                      data: id,
                     ),
                   ),
                 ],
@@ -166,7 +193,7 @@ Future<Uint8List>generate(
                     children: [
                       pw.Text('Adresse',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('invoice.from.address!'),
+                      pw.Text('Cotonou Kowegbo'),
                     ],
                   ),
                   pw.Column(
@@ -187,8 +214,8 @@ Future<Uint8List>generate(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                'Invoice details',
-                style: pw.TextStyle(fontSize: 18),
+                'Détails',
+                style: const pw.TextStyle(fontSize: 18),
               ),
               pw.SizedBox(height: 0.8 * PdfPageFormat.cm),
             ],
@@ -196,9 +223,9 @@ Future<Uint8List>generate(
           pw.Table(
             border: pw.TableBorder.all(),
             columnWidths: <int, pw.TableColumnWidth>{
-              0: pw.FlexColumnWidth(),
-              1: pw.FlexColumnWidth(),
-              2: pw.FixedColumnWidth(64),
+              0: const pw.FlexColumnWidth(),
+              1: const pw.FlexColumnWidth(),
+              2: const pw.FixedColumnWidth(100),
             },
             defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle,
             children: <pw.TableRow>[
@@ -206,7 +233,7 @@ Future<Uint8List>generate(
                 children: List.generate(headers.length, (index) {
                   return pw.Container(
                     color: PdfColors.grey300,
-                    padding: pw.EdgeInsets.all(5),
+                    padding: const pw.EdgeInsets.all(5),
                     alignment: pw.Alignment.centerLeft,
                     child: pw.Text(
                       headers[index],
@@ -217,7 +244,7 @@ Future<Uint8List>generate(
               pw.TableRow(
                 children: List.generate(invoices_data.length, (index) {
                   return pw.Container(
-                    padding: pw.EdgeInsets.all(5),
+                    padding: const pw.EdgeInsets.all(5),
                     alignment: pw.Alignment.center,
                     child: pw.Text(
                       invoices_data[index],
@@ -227,7 +254,8 @@ Future<Uint8List>generate(
               ),
             ],
           ),
-          pw.Divider(),
+          // pw.Divider(),
+          pw.SizedBox(height: 16),
           pw.Container(
             alignment: pw.Alignment.centerRight,
             child: pw.Row(
@@ -267,7 +295,7 @@ Future<Uint8List>generate(
                   children: [
                     pw.Text(
                       " ",
-                      style: pw.TextStyle(fontSize: 18),
+                      style: const pw.TextStyle(fontSize: 18),
                     ),
                     pw.Text(
                       ' ',
@@ -294,19 +322,22 @@ Future<Uint8List>generate(
                 )
               ]),
         ],
-        footer: (context) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.center,
-          children: [
-            pw.Divider(),
-            pw.SizedBox(height: 8 * PdfPageFormat.mm),
-            buildSimpleText(title: 'Addresse', value: 'Cotonou Kowegbo'),
-            pw.SizedBox(height: 5 * PdfPageFormat.mm),
-            buildSimpleText(
-                title: '',
-                value:
-                "email: aaaa@mail.com / tel: +229 90431956"),
-          ],
-        ),
+        footer: (context) => pw.Align(
+          alignment: pw.Alignment.center,
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              // pw.Divider(),
+              pw.SizedBox(height: 8 * PdfPageFormat.mm),
+              buildSimpleText(title: 'Adresse', value: 'Cotonou Kowegbo'),
+              pw.SizedBox(height: 5 * PdfPageFormat.mm),
+              buildSimpleText(
+                  title: '',
+                  value:
+                  "Email: aaaa@mail.com / tel: +229 90431956"),
+            ],
+          ),
+        )
       ));
   Uint8List bytes = await doc.save();
   return bytes;
@@ -350,11 +381,7 @@ buildText({
   );
 }
 
-const imageSignature = 'Signature';
-
-// String bodyText =
-//     'Bonjour ${widget.name}, merci d\'avoir choisi Flutter PDF pour générer votre PDF. Nous espérons que cette application vous sera utile pour vos besoins de génération de PDF.';
-
+final Locataire locataire = Locataire(name: '', somme: 0);
 
 Future<pw.PageTheme> _myPageTheme(PdfPageFormat format) async {
   final logoImage = pw.MemoryImage(
@@ -384,55 +411,58 @@ Future<pw.PageTheme> _myPageTheme(PdfPageFormat format) async {
   );
 }
 
-Future<void> saveAsFile(
+Future<ScaffoldFeatureController<SnackBar, SnackBarClosedReason>> saveAsFile(
     final BuildContext context,
     final LayoutCallback build,
     final PdfPageFormat pageFormat,
     ) async {
   final bytes = await build(pageFormat);
 
-
-  // final invoice = Invoice(bytes, 'invoice_name');
-  //
-  // final _invoiceBox = Hive.box('invoice_box');
-  // await _invoiceBox.add(invoice);
-
   final appDocDir = await getApplicationDocumentsDirectory();
   final appDocPath = appDocDir.path;
-  final file = File('$appDocPath/${DateTime.now().toIso8601String()}.pdf');
+  final file = File('$appDocPath/$name-$id}.pdf');
   if (kDebugMode) {
     print('Save as file ${file.path}...');
   }
   await file.writeAsBytes(bytes);
   await OpenFile.open(file.path);
 
+  final invoiceBox = Hive.box('invoice_box');
+
   final newItem = Invoice(
-    name: file.path.split('/').last,
+    id: int.parse(id),
+    name: name,
     pdf: bytes,
   );
-  print(bytes);
 
-  final invoiceBox = Hive.box('invoice_box');
   await invoiceBox.add({
+    "id" : newItem.id,
     "name": newItem.name,
     "pdf": newItem.pdf,
   });
 
-  print('newItem.name: ${newItem.name}');
+  return ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Enregistré avec succes'),
+      )
+  );
+
 }
 
 void showPrintedToast(final BuildContext context){
-  ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Printed'),
-      )
-  );
+  saveAsFile;
+  // ScaffoldMessenger.of(context).showSnackBar(
+  //     const SnackBar(
+  //       content: Text('Printed'),
+  //     )
+  // );
 }
 
 void  showSharedToast(final BuildContext context){
+  saveAsFile;
   ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Shared'),
+        content: Text('Shared succes'),
       )
   );
 }
