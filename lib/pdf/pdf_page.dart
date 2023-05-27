@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:generateur_de_recu/constants/strings.dart';
 import 'package:generateur_de_recu/models/locataire.dart';
+import 'package:generateur_de_recu/screens/home.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
@@ -54,15 +56,13 @@ class _PdfPageState extends State<PdfPage> {
     });
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     pw.RichText.debug = true;
 
     final actions = <PdfPreviewAction>[
-      if (!kIsWeb)
         const PdfPreviewAction(icon: Icon(Icons.save), onPressed: saveAsFile),
+      const PdfPreviewAction(icon: Icon(Icons.arrow_forward), onPressed: nextPage),
     ];
     var sign = _signatureBox.get('signature');
     return Scaffold(
@@ -70,12 +70,13 @@ class _PdfPageState extends State<PdfPage> {
         title: Text('$name-${widget.mois}'),
       ),
       body: PdfPreview(
-        loadingWidget: const Center(
+        loadingWidget: Center(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.picture_as_pdf , size: 100,),
+              // Icon(Icons.picture_as_pdf , size: 100,),
+              Image.asset(AppStrings.pdfIconAsset, height: 100, width: 100,),
               Text('Génération du fichier'),
               SizedBox(height: 20,),
               CircularProgressIndicator(),
@@ -98,6 +99,7 @@ class _PdfPageState extends State<PdfPage> {
 
 String id = DateFormat('ddMMyyyyHHmms').format(DateTime.now());
 String name = '';
+String mois_an = '';
 
 
 Future<Uint8List>generate(
@@ -121,6 +123,7 @@ Future<Uint8List>generate(
   final ttf = pw.Font.ttf(font);
 
   name = locataire.name;
+  mois_an = mois;
 
   const paymentTerms = '${15} days';
   final titles = <String>['Recu id:', 'Date:'];
@@ -431,7 +434,7 @@ Future<ScaffoldFeatureController<SnackBar, SnackBarClosedReason>> saveAsFile(
 
   final newItem = Invoice(
     id: int.parse(id),
-    name: name,
+    name: '$name-$mois_an',
     pdf: bytes,
   );
 
@@ -464,5 +467,18 @@ void  showSharedToast(final BuildContext context){
       const SnackBar(
         content: Text('Shared succes'),
       )
+  );
+}
+
+void nextPage(
+    final BuildContext context,
+    final LayoutCallback build,
+    final PdfPageFormat pageFormat,
+    ) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const HomePage(),
+    ),
   );
 }

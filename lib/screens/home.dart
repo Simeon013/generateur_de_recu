@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:generateur_de_recu/constants/colors.dart';
+import 'package:generateur_de_recu/constants/dimensions.dart';
+import 'package:generateur_de_recu/constants/widgets.dart';
+import 'package:generateur_de_recu/screens/signature.dart';
+import 'package:hive/hive.dart';
 
-import '../models/person.dart';
+import '../constants/strings.dart';
+import '../models/invoice.dart';
+import '../models/locataire.dart';
+import '../pdf/reader.dart';
+import 'creatte_invoice.dart';
+import 'invoices.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -12,59 +21,251 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _sommeController = TextEditingController();
 
-  List<Map<String, dynamic>> _items = [];
+  List<Map<String, dynamic>> _locatairesItems = [];
+  List<Map<String, dynamic>> _invoicesItems = [];
 
-  final _testBox = Hive.box('test_box');
+  final _locataireBox = Hive.box('locataire_box');
+  final _invoiceBox = Hive.box('invoice_box');
 
   @override
   void initState() {
     super.initState();
-    _refreshItems();
+    _refreshLocataires();
+    _refreshInvoices();
   }
 
-  // @override
-  // void dispose() {
-  //   _nameController.dispose();
-  //   _ageController.dispose();
-  //   super.dispose();
-  // }
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _sommeController.dispose();
+    super.dispose();
+  }
 
-  void _refreshItems() {
-    final data = _testBox.keys.map((key) {
-      final item = _testBox.get(key);
+  void _refreshLocataires() {
+    final data = _locataireBox.keys.map((key) {
+      final item = _locataireBox.get(key);
 
-      final person = Person(name: item['name'] ?? '', age: item['age'] ?? 0);
+      final locataire = Locataire(name: item['name'] ?? '', somme: item['somme'] ?? 0);
 
       return {
         "key": key,
-        "person": person,
+        "locataire": locataire,
       };
     }).toList();
     setState(() {
-      _items = data.reversed.toList();
+      _locatairesItems = data.reversed.toList();
     });
   }
 
+  void _refreshInvoices() {
+    final data = _invoiceBox.keys.map((key) {
+      final item = _invoiceBox.get(key);
+
+      final invoice = Invoice(id: item['id'] ?? 0, name: item['name'] ?? '', pdf: item['pdf']);
+
+      return {
+        "key": key,
+        "invoice": invoice,
+      };
+    }).toList();
+    setState(() {
+      _invoicesItems = data.reversed.toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.homeBackgroundColor,
+      body: Column(children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 25),
+          alignment: Alignment.bottomCenter,
+          height: AppDimensions.screenHeightPercent(context, 20),
+          decoration: BoxDecoration(color: AppColors.headerBackgroundColor),
+          child:
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    AppStrings.headerTitle,
+                    style: AppStrings.headerTitleStyle,
+                  ),
+                  Text(
+                    AppStrings.headerSubtitle,
+                    style: AppStrings.headerSubtitleStyle,
+                  )
+                ]),
+            Row(
+              children: [
+                Container(
+                  decoration: AppWidgets.iconBoxDecoration,
+                  child: IconButton(
+                    onPressed: () => _showForm(context, null),
+                    icon: AppWidgets.addIcon,
+                  ),
+                ),
+                SizedBox(
+                  width: AppDimensions.screenWidthPercent(context, 1),
+                ),
+                Container(
+                  decoration: AppWidgets.iconBoxDecoration,
+                  child: IconButton(
+                    onPressed: () {
+                      // Naviguer vers la page de modification de signature
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => SignaturePage()));
+                    },
+                    icon: AppWidgets.signatureIcon,
+                  ),
+                )
+              ],
+            )
+          ]),
+        ),
+        const SizedBox(height: 15),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(25),
+            children: [
+              Text(AppStrings.listTitle[0],
+                style: AppStrings.listTitleStyle
+              ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: List.generate(_locatairesItems.length, (index) {
+                    final item = _locatairesItems[index];
+                    final locataire = item['locataire'] as Locataire;
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () => _showForm(context, item['key']),
+                            child: Container(
+                              padding: const EdgeInsets.all(38.0),
+                              decoration: AppWidgets.locataireBoxDecoration,
+                              height: 110.0,
+                              child: Image.asset(AppStrings.personIconAsset),
+                            ),
+                          ),
+                          const SizedBox(height: 15,),
+                          RichText(
+                              text: TextSpan(
+                                  text: locataire.name,
+                                  style: AppStrings.littleText1,
+                                  // children: [
+                                  //   TextSpan(text: '.sketch', style: AppStrings.littleText2)
+                                  // ]
+                              )
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ),
+              const Divider(height: 60),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    AppStrings.listTitle[1],
+                    style: AppStrings.listTitleStyle
+                  ),
+                  TextButton(
+                    onPressed: // Naviguer vers la page de l'historique des reçus
+                        () => Navigator.push(context, MaterialPageRoute(builder: (context) => InvoicesPage())),
+                    child: const Text(
+                      'Voir plus',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Column(
+                children: List.generate(_invoicesItems.length, (index) {
+                  final item = _invoicesItems[index];
+                  final invoice = item['invoice'] as Invoice;
+                  String text = invoice.name;
+                  String limitedText = '${text.substring(0, text.length<20 ? text.length : 20)}...';
+                  return _invoiceBox.isEmpty
+                    ? Center(
+                      child: Text(AppStrings.noInvoice),
+                     )
+                    : GestureDetector(
+                    onTap: () => _openInvoice(invoice),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      margin: EdgeInsets.only(bottom: 8),
+                      decoration: AppWidgets.invoiceBoxDecoration,
+                      height: 65.0,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Image.asset(AppStrings.pdfIconAsset),
+                              // const Icon(Icons.picture_as_pdf_outlined, color: Colors.red,),
+                              const SizedBox(width: 12,),
+                              Text(limitedText, style: const TextStyle(fontSize: 16), overflow: TextOverflow.ellipsis,)
+                            ],
+                          ),
+                          IconButton(onPressed: (){}, icon: const Icon(Icons.more_vert_rounded, color: Colors.grey,))
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              )
+            ],
+          ),
+        ),
+      ]),
+      floatingActionButton: Container(
+        decoration: AppWidgets.fabDecoration,
+        child: FloatingActionButton(
+          onPressed: ()=> _createInvoice(),
+          child: const Icon(Icons.add),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomNavigationBar(
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        ],
+      ),
+    );
+  }
 
   //Create new item
-  Future<void> _createItem(Person newItem) async {
-    await _testBox.add({
+  Future<void> _createItem(Locataire newItem) async {
+    await _locataireBox.add({
       "name": newItem.name,
-      "age": newItem.age,
+      "somme": newItem.somme,
     });
-    _refreshItems();
+    _refreshLocataires();
   }
-
-
+  
   //Update item
-  Future<void> _updateItem(int itemKey, Person item) async {
-    await _testBox.put(itemKey, {
+  Future<void> _updateItem(int itemKey, Locataire item) async {
+    await _locataireBox.put(itemKey, {
       "name": item.name,
-      "age": item.age,
+      "somme": item.somme,
     });
-    _refreshItems();
+    _refreshLocataires();
   }
 
 
@@ -88,9 +289,10 @@ class _HomePageState extends State<HomePage> {
             TextButton(
               child: const Text('Oui'),
               onPressed: () async {
-                await _testBox.delete(key);
-                _refreshItems();
-                Navigator.of(dialogContext).pop(); // Dismiss alert dialog
+                await _locataireBox.delete(key);
+                _refreshLocataires();
+                Navigator.of(dialogContext).pop();
+                Navigator.of(dialogContext).pop();// Dismiss alert dialog
               },
             ),
           ],
@@ -102,9 +304,9 @@ class _HomePageState extends State<HomePage> {
   void _showForm(BuildContext ctx, int? itemKey) async {
 
     if (itemKey != null) {
-      final item = _testBox.get(itemKey);
+      final item = _locataireBox.get(itemKey);
       _nameController.text = item['name'];
-      _ageController.text = item['age'].toString();
+      _sommeController.text = item['somme'].toString();
     }
 
     showModalBottomSheet(
@@ -122,26 +324,44 @@ class _HomePageState extends State<HomePage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                itemKey == null
+                ? const Center(
+                  child: Text(
+                    'Ajouter un nouveau locataire',
+                    style: AppStrings.formTitleStyle,
+                  ),
+                )
+                : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Modifier un locataire',
+                      style: AppStrings.formTitleStyle,
+                    ),
+                    IconButton(onPressed: () => _deleteItem(itemKey), icon: const Icon(Icons.delete, color: Colors.red,))
+                  ],
+                ),
+                const SizedBox(height: 10),
                 TextField(
                     controller: _nameController,
                     decoration: const InputDecoration(
-                      labelText: 'Item Name',
+                      labelText: 'Nom',
                     )
                 ),
                 const SizedBox(height: 10),
                 TextField(
-                    controller: _ageController,
+                    controller: _sommeController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                      labelText: 'age',
+                      labelText: 'Somme',
                     )
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    final newItem = Person(
+                    final newItem = Locataire(
                       name: _nameController.text,
-                      age: int.parse(_ageController.text),
+                      somme: int.parse(_sommeController.text),
                     );
 
                     if (itemKey == null) {
@@ -150,15 +370,14 @@ class _HomePageState extends State<HomePage> {
 
                     if (itemKey != null) {
                       _updateItem(itemKey, newItem);
-
                     }
 
                     _nameController.text = '';
-                    _ageController.text = '';
+                    _sommeController.text = '';
 
                     Navigator.of(context).pop();
                   },
-                  child: Text(itemKey==null? 'Save' : 'Update'),
+                  child: Text(itemKey==null? 'Enregistrer' : 'Modifier'),
                 ),
                 const SizedBox(height: 15),
               ],
@@ -167,46 +386,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Person List'),
-      ),
-      body: ListView.builder(
-          itemCount: _items.length,
-          itemBuilder: (_, index) {
-            final item = _items[index];
-            final person = item['person'] as Person;
-            print(_items[index][1]);
-            return Card(
-                color: Colors.grey,
-                margin: const EdgeInsets.all(10),
-                elevation: 3,
-                child: ListTile(
-                  title: Text(person.name?? 'Unknown'),
-                  subtitle: Text(person.age.toString()),
-                  trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          onPressed: () => _showForm(context, item['key']),
-                          icon: const Icon(Icons.edit),
-                        ),
-                        IconButton(
-                          onPressed: () => _deleteItem(item['key']),
-                          icon: const Icon(Icons.delete),
-                        )
-                      ]
-                  ),
-                )
-            );
-          }
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showForm(context, null),
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
+  void _createInvoice(){
+    Navigator.push(context, MaterialPageRoute(builder: (context) => CreateInvoicePage()));
+  }
+
+  Future<void> _openInvoice(Invoice invoice) async {
+    final pdfData = invoice.pdf;
+    final pdfBytes = pdfData.buffer.asUint8List();
+
+    Navigator.push(context, MaterialPageRoute(builder: (context) => ReaderPage(pdf: pdfBytes, pdfName: invoice.name,)));
   }
 }
