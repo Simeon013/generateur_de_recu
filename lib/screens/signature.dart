@@ -38,7 +38,6 @@ class _SignaturePageState extends State<SignaturePage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
   }
 

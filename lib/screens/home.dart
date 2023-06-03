@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:generateur_de_recu/constants/colors.dart';
 import 'package:generateur_de_recu/constants/dimensions.dart';
 import 'package:generateur_de_recu/constants/widgets.dart';
+import 'package:generateur_de_recu/screens/profile.dart';
 import 'package:generateur_de_recu/screens/signature.dart';
 import 'package:hive/hive.dart';
 
@@ -20,6 +22,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _sommeController = TextEditingController();
 
@@ -117,9 +120,9 @@ class _HomePageState extends State<HomePage> {
                   child: IconButton(
                     onPressed: () {
                       // Naviguer vers la page de modification de signature
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => SignaturePage()));
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfilePage()));
                     },
-                    icon: AppWidgets.signatureIcon,
+                    icon: AppWidgets.profileIcon,
                   ),
                 )
               ],
@@ -150,7 +153,7 @@ class _HomePageState extends State<HomePage> {
                               padding: const EdgeInsets.all(38.0),
                               decoration: AppWidgets.locataireBoxDecoration,
                               height: 110.0,
-                              child: Image.asset(AppStrings.personIconAsset),
+                              child: SvgPicture.asset(AppStrings.personIconAsset),
                             ),
                           ),
                           const SizedBox(height: 15,),
@@ -197,7 +200,7 @@ class _HomePageState extends State<HomePage> {
                   final item = _invoicesItems[index];
                   final invoice = item['invoice'] as Invoice;
                   String text = invoice.name;
-                  String limitedText = '${text.substring(0, text.length<20 ? text.length : 20)}...';
+                  String limitedText = text.length < 25 ? text : '${text.substring(0, 25)}...';
                   return _invoiceBox.isEmpty
                     ? Center(
                       child: Text(AppStrings.noInvoice),
@@ -206,7 +209,7 @@ class _HomePageState extends State<HomePage> {
                     onTap: () => _openInvoice(invoice),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      margin: EdgeInsets.only(bottom: 8),
+                      margin: const EdgeInsets.only(bottom: 8),
                       decoration: AppWidgets.invoiceBoxDecoration,
                       height: 65.0,
                       child: Row(
@@ -214,7 +217,7 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           Row(
                             children: [
-                              Image.asset(AppStrings.pdfIconAsset),
+                              SvgPicture.asset(AppStrings.pdfIconAsset),
                               // const Icon(Icons.picture_as_pdf_outlined, color: Colors.red,),
                               const SizedBox(width: 12,),
                               Text(limitedText, style: const TextStyle(fontSize: 16), overflow: TextOverflow.ellipsis,)
@@ -231,22 +234,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ]),
-      floatingActionButton: Container(
-        decoration: AppWidgets.fabDecoration,
-        child: FloatingActionButton(
-          onPressed: ()=> _createInvoice(),
-          child: const Icon(Icons.add),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomNavigationBar(
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
-        ],
-      ),
     );
   }
 

@@ -10,6 +10,12 @@ class AppWidgets {
     color: Colors.white,
   );
 
+  static Icon profileIcon = const Icon(
+    Icons.person,
+    size: 28,
+    color: Colors.white,
+  );
+
   static Icon notificationIcon = const Icon(
     Icons.notifications,
     size: 28,

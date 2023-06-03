@@ -11,11 +11,11 @@ class AppStrings {
 
   static const String fileIconAsset = "assets/vs_code.png";
 
-  static const String personIconAsset = "assets/icons/file.png";
+  static const String personIconAsset = "assets/icons/profile.svg";
 
   static const String invoiceIconAsset = "assets/icons/invoice.png";
 
-  static const String pdfIconAsset = "assets/icons/file-pdf.png";
+  static const String pdfIconAsset = "assets/icons/invoice.svg";
 
   static const List listAssets = [
     'assets/vs_code.png',

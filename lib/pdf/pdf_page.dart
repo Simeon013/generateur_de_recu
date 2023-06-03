@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:generateur_de_recu/constants/strings.dart';
 import 'package:generateur_de_recu/models/locataire.dart';
 import 'package:generateur_de_recu/screens/home.dart';
@@ -15,6 +16,7 @@ import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../models/invoice.dart';
+import '../models/profile.dart';
 
 class PdfPage extends StatefulWidget {
   final Locataire locataire;
@@ -31,6 +33,7 @@ class _PdfPageState extends State<PdfPage> {
   PrintingInfo? printingInfo;
 
   final _signatureBox = Hive.box('signature_box');
+  final _profileBox = Hive.box('profile_box');
   final _invoiceBox = Hive.box('invoice_box');
 
 
@@ -64,10 +67,23 @@ class _PdfPageState extends State<PdfPage> {
         const PdfPreviewAction(icon: Icon(Icons.save), onPressed: saveAsFile),
       const PdfPreviewAction(icon: Icon(Icons.arrow_forward), onPressed: nextPage),
     ];
-    var sign = _signatureBox.get('signature');
+    String profileName = _profileBox.get('name');
+    String profileEmail = _profileBox.get('email');
+    String profileTel = _profileBox.get('tel').toString();
+    String profileAdress = _profileBox.get('adresse');
+    var sign = _profileBox.get('signature');
+
+    final Profile profile = Profile(
+      name: profileName,
+      email: profileEmail,
+      tel: int.parse(profileTel),
+      adress: profileAdress,
+      imageBytes: sign
+    );
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('$name-${widget.mois}'),
+        title: Text('${widget.locataire.name}-${widget.mois}'),
       ),
       body: PdfPreview(
         loadingWidget: Center(
@@ -76,10 +92,10 @@ class _PdfPageState extends State<PdfPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Icon(Icons.picture_as_pdf , size: 100,),
-              Image.asset(AppStrings.pdfIconAsset, height: 100, width: 100,),
-              Text('Génération du fichier'),
-              SizedBox(height: 20,),
-              CircularProgressIndicator(),
+              SvgPicture.asset(AppStrings.pdfIconAsset, height: 100, width: 100,),
+              const Text('Génération du fichier'),
+              const SizedBox(height: 20,),
+              const CircularProgressIndicator(),
             ],
           ),
         ),
@@ -91,7 +107,7 @@ class _PdfPageState extends State<PdfPage> {
         actions: actions,
         onPrinted: showPrintedToast,
         onShared: showSharedToast,
-        build: (_) => generate(widget.locataire,widget.mois,sign, PdfPageFormat.a4, id),
+        build: (_) => generate(widget.locataire,widget.mois,profile,PdfPageFormat.a4, id),
       )
     );
   }
@@ -105,7 +121,7 @@ String mois_an = '';
 Future<Uint8List>generate(
     final Locataire locataire,
     final String mois,
-    final Uint8List signature,
+    final Profile profile,
     final PdfPageFormat format,
     final String id
     ) async{
@@ -118,6 +134,7 @@ Future<Uint8List>generate(
   final footerImage = pw.MemoryImage(
     (await rootBundle.load('assets/android_studio.png')).buffer.asUint8List(),
   );
+  var signature = profile.imageBytes;
   final image = pw.MemoryImage(signature.buffer.asUint8List());
   final font = await rootBundle.load('assets/OpenSansRegular.ttf');
   final ttf = pw.Font.ttf(font);
@@ -163,12 +180,12 @@ Future<Uint8List>generate(
                       //   width: 80,
                       // )
                       //     : Text(""),
-                      pw.Image(
-                        alignment: pw.Alignment.topLeft,
-                        logoImage,
-                        fit: pw.BoxFit.contain,
-                        width: 100,
-                      ),
+                      // pw.Image(
+                      //   alignment: pw.Alignment.topLeft,
+                      //   logoImage,
+                      //   fit: pw.BoxFit.contain,
+                      //   width: 100,
+                      // ),
                       pw.SizedBox(height: 1 * PdfPageFormat.cm),
                       pw.Text('Reçu de location',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
@@ -196,7 +213,7 @@ Future<Uint8List>generate(
                     children: [
                       pw.Text('Adresse',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      pw.Text('Cotonou Kowegbo'),
+                      pw.Text(profile.adress),
                     ],
                   ),
                   pw.Column(
@@ -318,7 +335,7 @@ Future<Uint8List>generate(
                         height: 80,
                       ),
                       pw.Text(
-                        "Siméon DAOUDA",
+                        profile.name,
                       ),
                     ]
                   )
@@ -332,12 +349,12 @@ Future<Uint8List>generate(
             children: [
               // pw.Divider(),
               pw.SizedBox(height: 8 * PdfPageFormat.mm),
-              buildSimpleText(title: 'Adresse', value: 'Cotonou Kowegbo'),
+              buildSimpleText(title: 'Adresse', value: profile.adress),
               pw.SizedBox(height: 5 * PdfPageFormat.mm),
               buildSimpleText(
                   title: '',
                   value:
-                  "Email: aaaa@mail.com / tel: +229 90431956"),
+                  "Email: ${profile.email} / tel: ${profile.tel}"),
             ],
           ),
         )

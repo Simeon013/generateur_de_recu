@@ -7,6 +7,7 @@ class Assets {
   static const String assetsIconsInvoice = 'assets/icons/invoice.svg';
   static const String assetsIconsProfile = 'assets/icons/profile.icns';
   static const String assetsOpenSansRegular = 'assets/OpenSansRegular.ttf';
+  static const String assetsRolivoice = 'assets/rolivoice.png';
   static const String assetsSplash = 'assets/splash.png';
   static const String assetsVsCode = 'assets/vs_code.png';
   static const String iconsFile = 'assets/icons/file.png';

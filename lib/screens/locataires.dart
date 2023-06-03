@@ -150,7 +150,6 @@ class _LocatairesPageState extends State<LocatairesPage> {
 
                     if (itemKey != null) {
                       _updateItem(itemKey, newItem);
-
                     }
 
                     _nameController.text = '';
